@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kumi Senda Cobalto</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<!--APP-->
+<main class="shell">
+  <header class="top">
+    <h1>KUMI <span>Senda Cobalto</span></h1>
+    <p>RPG de captura de criaturas · 240 × 160</p>
+  </header>
+
+  <div id="stage"><canvas id="screen" width="240" height="160" aria-label="Pantalla del juego"></canvas></div>
+
+  <div id="below">
+    <div id="pad" aria-label="Controles táctiles">
+      <div class="dpad">
+        <button type="button" id="btn-up" class="d up" data-act="up" aria-label="Arriba">▲</button>
+        <button type="button" id="btn-left" class="d left" data-act="left" aria-label="Izquierda">◀</button>
+        <button type="button" id="btn-right" class="d right" data-act="right" aria-label="Derecha">▶</button>
+        <button type="button" id="btn-down" class="d down" data-act="down" aria-label="Abajo">▼</button>
+      </div>
+      <button type="button" id="btn-menu" class="pill" data-act="menu">MENÚ</button>
+      <div class="ab">
+        <button type="button" id="btn-b" class="round b" data-act="b" aria-label="Volver">B</button>
+        <button type="button" id="btn-a" class="round a" data-act="a" aria-label="Confirmar">A</button>
+      </div>
+    </div>
+    <ul class="keys">
+      <li><kbd>Flechas</kbd> / <kbd>WASD</kbd> moverse</li>
+      <li><kbd>Z</kbd> / <kbd>Enter</kbd> confirmar</li>
+      <li><kbd>X</kbd> / <kbd>Esc</kbd> volver, correr</li>
+      <li><kbd>M</kbd> menú y guardar</li>
+    </ul>
+  </div>
+</main>
+<!--/APP-->
+<script src="js/data.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/maps.js"></script>
+<script src="js/battle.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

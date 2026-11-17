@@ -1,0 +1,137 @@
+/* Disposición: una consola portátil centrada; pantalla arriba, mandos debajo. Aspecto único y oscuro. */
+:root {
+  color-scheme: dark;
+  --bg: #121a2e;
+  --bg-2: #1b2744;
+  --shell: #23375e;
+  --shell-edge: #0b1120;
+  --ink: #e9f1ff;
+  --ink-soft: #9db0d4;
+  --accent: #f8d030;
+  --teal: #37b8b0;
+  --btn-a: #e8584a;
+  --btn-b: #3f8fe0;
+  --font-display: 'Silkscreen', 'Courier New', monospace;
+  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  background-image: radial-gradient(circle at 50% 0%, var(--bg-2), var(--bg) 70%);
+  color: var(--ink);
+  font-family: var(--font-body);
+  padding-block: 12px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  box-sizing: border-box;
+  overscroll-behavior: none;
+}
+.shell {
+  max-width: 1240px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.top { text-align: center; }
+.top h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  text-shadow: 2px 2px 0 var(--shell-edge);
+}
+.top h1 span { color: var(--ink); font-size: 0.7em; letter-spacing: 0.04em; }
+.top p { margin: 2px 0 0; font-size: 0.75rem; color: var(--ink-soft); }
+
+#stage {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+#screen {
+  display: block;
+  max-width: 100%;
+  background: #101018;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  border: 6px solid var(--shell-edge);
+  border-radius: 10px;
+  box-shadow: 0 0 0 4px var(--shell), 0 10px 30px rgba(0, 0, 0, 0.5);
+  box-sizing: content-box;
+}
+
+#below { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+
+.keys {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 16px;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+kbd {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  color: var(--ink);
+  background: var(--shell);
+  border: 1px solid var(--shell-edge);
+  border-bottom-width: 3px;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+/* Mandos táctiles */
+#pad {
+  display: none;
+  width: 100%;
+  max-width: 460px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+#pad button {
+  font-family: var(--font-display);
+  color: var(--ink);
+  border: 2px solid var(--shell-edge);
+  background: var(--shell);
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+#pad button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#pad button.on { filter: brightness(1.5); transform: translateY(1px); }
+.dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 46px);
+  grid-template-rows: repeat(3, 46px);
+}
+.dpad .d { font-size: 1rem; border-radius: 8px; }
+.dpad .up { grid-area: 1 / 2; }
+.dpad .left { grid-area: 2 / 1; }
+.dpad .right { grid-area: 2 / 3; }
+.dpad .down { grid-area: 3 / 2; }
+.pill { align-self: flex-end; padding: 8px 14px; border-radius: 999px; font-size: 0.75rem; }
+.ab { display: flex; gap: 12px; align-items: center; }
+.round { width: 58px; height: 58px; border-radius: 50%; font-size: 1.1rem; }
+#pad .round.a { background: var(--btn-a); margin-bottom: 26px; }
+#pad .round.b { background: var(--btn-b); margin-top: 26px; }
+
+@media (hover: none), (pointer: coarse), (max-width: 640px) {
+  #pad { display: flex; }
+  .top p { display: none; }
+  .top h1 { font-size: 1.1rem; }
+}
+@media (hover: none) and (pointer: coarse) {
+  .keys { display: none; }
+}
