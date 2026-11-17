@@ -7,7 +7,7 @@ const ctx = cv.getContext('2d');
 ctx.imageSmoothingEnabled = false;
 
 /* Estado global de presentación */
-const G = { scene: 'boot', fade: 0, flash: 0, speed: 1, time: 0 };
+const G = { scene: 'boot', fade: 0, flash: 0, speed: 1, time: 0, wipe: 0, shake: 0 };
 
 /* ---------- Entrada ---------- */
 const Input = {
@@ -298,3 +298,81 @@ async function confirmYes(text) { return (await ask(text)) === 0; }
 /* ---------- Utilidades ---------- */
 function rnd(n) { return Math.floor(Math.random() * n); }
 function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+
+/* ---------- Partículas ---------- */
+function pxLine(x0, y0, x1, y1, s) {
+  const steps = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
+  for (let i = 0; i <= steps; i++) ctx.fillRect(Math.round(x0 + (x1 - x0) * i / steps), Math.round(y0 + (y1 - y0) * i / steps), s, s);
+}
+const FX = {
+  list: [],
+  add(p) {
+    const q = Object.assign({ t: 0, life: 400, vx: 0, vy: 0, g: 0, s: 1, c: '#ffffff', layer: 'battle' }, p);
+    this.list.push(q);
+    return q;
+  },
+  update(dt) {
+    const k = dt / 16;
+    for (let i = this.list.length - 1; i >= 0; i--) {
+      const p = this.list[i];
+      p.t += dt;
+      if (p.t >= p.life) { this.list.splice(i, 1); continue; }
+      if (p.t < 0) continue;
+      p.vy += p.g * k; p.x += p.vx * k; p.y += p.vy * k;
+    }
+  },
+  clear(layer) { this.list = this.list.filter(p => p.layer !== layer); },
+  draw(layer, ox, oy) {
+    ox = ox || 0; oy = oy || 0;
+    for (const p of this.list) {
+      if (p.layer !== layer || p.t < 0) continue;
+      const k = p.t / p.life;
+      ctx.globalAlpha = p.fade === false ? 1 : clamp(1 - k * k, 0, 1);
+      ctx.fillStyle = p.c;
+      const x = Math.round(p.x - ox), y = Math.round(p.y - oy), s = p.s;
+      switch (p.shape) {
+        case 'plus':
+          ctx.fillRect(x - s, y, s * 2 + 1, 1); ctx.fillRect(x, y - s, 1, s * 2 + 1);
+          if (s >= 4) { ctx.fillRect(x - 1, y - 1, 3, 3); ctx.fillRect(x - (s >> 1), y - (s >> 1), 1, 1); ctx.fillRect(x + (s >> 1), y + (s >> 1), 1, 1); ctx.fillRect(x - (s >> 1), y + (s >> 1), 1, 1); ctx.fillRect(x + (s >> 1), y - (s >> 1), 1, 1); }
+          break;
+        case 'bubble':
+          ctx.fillRect(x - 1, y - 3, 3, 1); ctx.fillRect(x - 1, y + 3, 3, 1);
+          ctx.fillRect(x - 3, y - 1, 1, 3); ctx.fillRect(x + 3, y - 1, 1, 3);
+          ctx.fillRect(x - 2, y - 2, 1, 1); ctx.fillRect(x + 2, y - 2, 1, 1); ctx.fillRect(x - 2, y + 2, 1, 1); ctx.fillRect(x + 2, y + 2, 1, 1);
+          ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 1, y - 1, 1, 1); break;
+        case 'ring': {
+          const r = p.r0 + (p.r1 - p.r0) * k, n = Math.max(10, Math.round(r * 2.5));
+          for (let i = 0; i < n; i++) {
+            const a = i / n * Math.PI * 2;
+            ctx.fillRect(Math.round(x + Math.cos(a) * r), Math.round(y + Math.sin(a) * r * (p.flat || 1)), s, s);
+          }
+          break;
+        }
+        case 'bolt': for (let i = 1; i < p.pts.length; i++) pxLine(x + p.pts[i - 1][0], y + p.pts[i - 1][1], x + p.pts[i][0], y + p.pts[i][1], s); break;
+        case 'slash': pxLine(x, y, x + p.dx, y + p.dy, s); break;
+        case 'arrow': {
+          const d = p.up ? -1 : 1;
+          ctx.fillRect(x, y + 3 * d, 1, 1); ctx.fillRect(x - 1, y + 2 * d, 3, 1); ctx.fillRect(x - 2, y + d, 5, 1);
+          ctx.fillRect(x, Math.min(y, y - 2 * d), 1, 3);
+          break;
+        }
+        case 'rock':
+          ctx.fillStyle = '#3a3028'; ctx.fillRect(x - 1, y - 1, s + 2, s + 2);
+          ctx.fillStyle = p.c; ctx.fillRect(x, y, s, s);
+          ctx.fillStyle = '#d8c8a0'; ctx.fillRect(x + 1, y + 1, Math.max(1, s >> 1), 1);
+          break;
+        default:
+          if (p.o) { ctx.fillStyle = p.o; ctx.fillRect(x - 1, y - 1, s + 2, s + 2); ctx.fillStyle = p.c; }
+          ctx.fillRect(x, y, s, s);
+      }
+    }
+    ctx.globalAlpha = 1;
+  },
+};
+function burst(x, y, n, o) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, sp = (o.speed || 1.5) * (0.4 + Math.random() * 0.6);
+    FX.add(Object.assign({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, c: o.cols[rnd(o.cols.length)], life: (o.life || 380) + rnd(150) }, o.extra || {}));
+  }
+}
+function shake(px, ms) { return tween(ms || 260, k => { G.shake = px * (1 - k); }); }

@@ -1,11 +1,14 @@
 /* Mapas, personajes y eventos de la aventura.
    Leyenda exterior: . hierba  , hierba alta  : camino  T árbol  ~ agua  * flores
                      f valla  o roca  S cartel  RLHMG tejados  W/w pared  D puerta
+                     v bordillo (se salta hacia abajo)  = puente  Y acantilado  C boca de cueva
+   Leyenda cueva:    K pared  - suelo  ; musgo alto  O roca  X salida
    Leyenda interior: _ suelo  # muro  c mostrador  t mesa  b estantería  p planta
                      E salida  B cama  k terminal  s pilar */
 'use strict';
 
-const WALKABLE = '.,:*_ED';
+const WALKABLE = '.,:*_ED=-;CX';
+const ENC_TILES = ',;';
 
 const MAPS = {
   /* ---------------- Villa Alba ---------------- */
@@ -40,7 +43,7 @@ const MAPS = {
     },
     npcs: [
       { id: 'old', spr: 'old', x: 6, y: 9, dir: 'down', text: ['En la hierba alta viven kumis salvajes.', 'Si vas sin compañero, ni te acerques. Con uno, ¡podrás capturar más!'] },
-      { id: 'girl', spr: 'girl', x: 12, y: 14, dir: 'up', text: ['Pulsa M para abrir el menú y guardar la partida.', 'Yo guardo siempre antes de un combate difícil.'] },
+      { id: 'girl', spr: 'girl', x: 12, y: 14, dir: 'up', wander: 2, text: ['Pulsa M para abrir el menú y guardar la partida.', 'Yo guardo siempre antes de un combate difícil.'] },
     ],
     onStep(x, y) {
       if (y <= 2 && (x === 9 || x === 10) && !S.flags.starter) {
@@ -113,8 +116,11 @@ const MAPS = {
           } else if (S.flags.badge) {
             await say('PROF. CEIBA: ¡La Medalla Chispa! Sabía que lo conseguirías.');
             await say('PROF. CEIBA: Has capturado ' + S.caught + ' kumis. ¡Sigue explorando!');
+            if (S.flags.st_cristalio) await say('PROF. CEIBA: ¡Y encontraste al kumi de cristal de la Gruta Eco! Increíble.');
+            else await say('PROF. CEIBA: Dicen que en el fondo de la Gruta Eco, al este de Ciudad Cobalto, brilla un kumi de cristal.');
           } else {
             await say('PROF. CEIBA: Debilita a los kumis salvajes antes de lanzar un orbe.');
+            await say('PROF. CEIBA: Al ganar experiencia, muchos kumis evolucionan. Mantén X pulsado si quieres detenerlo.');
             await say('PROF. CEIBA: En Ciudad Cobalto está el gimnasio de TORMES. ¡Gana su medalla!');
           }
         },
@@ -278,7 +284,7 @@ const MAPS = {
       'T.:.HHHH..::..MMMM..:..T',
       'T.:.hDWW..::..mDWW..:..T',
       'T.:..:....::...:....:..T',
-      'T.::::::::::::::::::::.T',
+      'T.::::::::::::::::::::::',
       'T....S....::....*......T',
       'T.RRRR....::...........T',
       'T.RRRR....::...........T',
@@ -292,13 +298,31 @@ const MAPS = {
       { x: 10, y: 21, to: 'forest', tx: 10, ty: 1 }, { x: 11, y: 21, to: 'forest', tx: 11, ty: 1 },
       { x: 5, y: 5, to: 'gym', tx: 5, ty: 10 }, { x: 5, y: 11, to: 'center', tx: 5, ty: 5 },
       { x: 15, y: 11, to: 'shop', tx: 4, ty: 5 }, { x: 3, y: 17, to: 'house', tx: 4, ty: 5 },
+      { x: 23, y: 13, to: 'route2', tx: 1, ty: 7 },
     ],
+    onStep(x, y) {
+      if (x === 22 && y === 13 && !S.flags.badge) {
+        return async () => {
+          await say('GUARDA: ¡Un momento! La Senda 2 lleva a la Gruta Eco y está llena de kumis fuertes.');
+          await say('GUARDA: Solo dejo pasar a quien tenga la medalla del Gimnasio Cobalto.');
+          await walkPlayer('left');
+        };
+      }
+      return null;
+    },
     signs: { '5,14': 'CIUDAD COBALTO\nLa ciudad del cielo despejado.' },
     items: [{ id: 'c_orb', x: 21, y: 1, item: 'orbe', qty: 2 }],
     npcs: [
       { id: 'c1', spr: 'boy', x: 8, y: 6, dir: 'left', text: ['El edificio morado es el gimnasio de TORMES.', 'Usa kumis eléctricos. Los de planta y los de roca aguantan bien sus descargas.'] },
-      { id: 'c2', spr: 'woman', x: 13, y: 6, dir: 'right', text: ['El tejado verde es el Centro Kumi: curan gratis a tu equipo.', 'En el tejado amarillo venden orbes y pociones.'] },
-      { id: 'c3', spr: 'girl', x: 17, y: 14, dir: 'down', text: ['Si capturas más de seis kumis, los demás van al almacén.', 'Puedes recogerlos en el terminal del Centro Kumi.'] },
+      { id: 'c2', spr: 'woman', x: 13, y: 6, dir: 'right', wander: 2, text: ['El tejado verde es el Centro Kumi: curan gratis a tu equipo.', 'En el tejado amarillo venden orbes y pociones.'] },
+      {
+        id: 'guard', spr: 'guard', x: 22, y: 12, dir: 'down', still: true,
+        async talk() {
+          if (S.flags.badge) await say('GUARDA: ¡Ya tienes la medalla! Adelante, la Senda 2 está al este.');
+          else await say('GUARDA: Sin la Medalla Chispa no puedo dejarte pasar hacia la Senda 2.');
+        },
+      },
+      { id: 'c3', spr: 'girl', x: 17, y: 14, dir: 'down', wander: 2, text: ['Si capturas más de seis kumis, los demás van al almacén.', 'Puedes recogerlos en el terminal del Centro Kumi.'] },
     ],
   },
 
@@ -414,7 +438,7 @@ const MAPS = {
           }
           await say('TORMES: Soy TORMES, líder del Gimnasio Cobalto. Mis kumis golpean como el rayo.');
           await say('TORMES: ¡Demuéstrame que tu equipo aguanta la tormenta!');
-          const r = await battle({ trainer: { name: 'TORMES', cls: 'Líder', party: [['chispo', 9], ['fulgato', 11]], reward: 600, lose: 'Una tormenta siempre acaba despejando... Has ganado.' } });
+          const r = await battle({ trainer: { name: 'TORMES', cls: 'Líder', spr: 'leader', party: [['chispo', 9], ['fulgato', 11]], reward: 600, lose: 'Una tormenta siempre acaba despejando... Has ganado.' } });
           if (r === 'win') {
             S.flags.badge = true; S.badges = 1;
             await say('TORMES: Has demostrado temple. ¡Recibe la Medalla Chispa!');
@@ -427,6 +451,127 @@ const MAPS = {
       },
     ],
   },
+};
+
+/* ---------------- Senda 2 (tras la medalla) ---------------- */
+MAPS.route2 = {
+  name: 'SENDA 2',
+  t: [
+    'TTTTTTTTTTTTTTTTTTTTTTTTTYYYYYYYYT',
+    'T.....,,,,,,.....T,,,,,..YYYYCYYYT',
+    'T.....,,,,,,.....T,,,,,......:...T',
+    'T..*..,,,,,,..S..T,,,,,......:.*.T',
+    'Tvvvvvvv....vvvvvT......,,,,,:...T',
+    'T.......:...........~~~~,,,,,:...T',
+    'T..o....:...ffff....~~~~.....:...T',
+    '::::::::::::::::::::====::::::...T',
+    'T......,,,,,,.......~~~~.........T',
+    'T......,,,,,,...*...~~~~..,,,,,..T',
+    'T..S...,,,,,,.......~~~~..,,,,,..T',
+    'T...........TTTT....~~~~..,,,,,..T',
+    'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+  ],
+  warps: [
+    { x: 0, y: 7, to: 'city', tx: 22, ty: 13 },
+    { x: 29, y: 1, to: 'cave', tx: 10, ty: 14 },
+  ],
+  signs: {
+    '14,3': 'SENDA 2\nAl este: Gruta Eco.',
+    '3,10': 'CONSEJO\nLos bordillos se saltan hacia abajo, pero no se pueden subir.',
+  },
+  items: [
+    { id: 'r2_sp', x: 30, y: 2, item: 'superpocion', qty: 1 },
+    { id: 'r2_orb', x: 1, y: 11, item: 'orbe', qty: 3 },
+    { id: 'r2_pot', x: 1, y: 1, item: 'pocion', qty: 2 },
+  ],
+  encRate: 0.13,
+  enc: [
+    { sp: 'roedin', min: 10, max: 12, w: 25 }, { sp: 'plumelo', min: 10, max: 12, w: 25 },
+    { sp: 'chispo', min: 11, max: 13, w: 20 }, { sp: 'setin', min: 11, max: 13, w: 15 },
+    { sp: 'roedon', min: 12, max: 13, w: 8 }, { sp: 'plumazo', min: 13, max: 14, w: 7 },
+  ],
+  npcs: [
+    { id: 'r2o', spr: 'old', x: 5, y: 8, dir: 'right', text: ['Cuando un kumi gana bastante experiencia, puede evolucionar.', 'Si no quieres que cambie, mantén X pulsado mientras evoluciona.'] },
+    {
+      id: 'r2a', spr: 'fisher', x: 24, y: 8, dir: 'up',
+      trainer: { name: 'BRUNO', cls: 'Pescador', los: 2, party: [['plumelo', 12], ['plumazo', 13]], reward: 260,
+        before: '¡Llevas un rato espantándome los peces! ¡Combate!', lose: 'Hoy no pican ni los combates...',
+        after: 'Desde el puente se ve la Gruta Eco. Dicen que dentro hay un brillo extraño.' },
+    },
+    {
+      id: 'r2b', spr: 'woman', x: 10, y: 9, dir: 'right',
+      trainer: { name: 'NORA', cls: 'Exploradora', los: 4, party: [['setin', 12], ['chispo', 13]], reward: 280,
+        before: '¡Esta hierba es mi zona de entrenamiento!', lose: 'Vale, vale. Tú ganas.',
+        after: 'Los kumis de la gruta son de roca y electricidad. Lleva agua o planta.' },
+    },
+    {
+      id: 'r2c', spr: 'boy', x: 26, y: 9, dir: 'left',
+      trainer: { name: 'IKER', cls: 'Joven', los: 2, party: [['roedon', 13], ['polilux', 13]], reward: 260,
+        before: '¡Mi kumi acaba de evolucionar! ¡Tengo que probarlo!', lose: '¡Evolucionar no lo es todo!',
+        after: 'Mi Larvita se convirtió en Crisalín y luego en Polilux. ¡Qué rápido crecen!' },
+    },
+    {
+      id: 'rival2', spr: 'rival', x: 29, y: 3, dir: 'down', hide: () => !!S.flags.tr_rival2,
+      trainer: {
+        name: 'DANA', cls: 'Rival', los: 3, reward: 800,
+        party: () => [[SPECIES[S.flags.rivalSp || 'ascuino'].evo.to, 17], ['plumazo', 15], ['roedon', 15]],
+        before: '¡Por fin llegas! Mis kumis han evolucionado. ¡Veamos cuánto has mejorado tú!',
+        lose: '¡Increíble! Mis kumis han crecido, pero los tuyos todavía más.',
+        afterWin: 'DANA: La gruta es toda tuya. Dicen que en el fondo duerme un kumi de cristal. ¡Suerte!',
+        after: '¡Nos vemos!',
+      },
+    },
+  ],
+};
+
+/* ---------------- Gruta Eco ---------------- */
+MAPS.cave = {
+  name: 'GRUTA ECO', dark: true,
+  t: [
+    'KKKKKKKKKKKKKKKKKKKK',
+    'K------KKKK-------KK',
+    'K-;;;--KKKK--;;;--KK',
+    'K-;;;------------O-K',
+    'K--O---KKKK-;;;----K',
+    'KKKK---KKKK-;;;--KKK',
+    'K------KKKKKKKKK---K',
+    'K-;;;-----------;;-K',
+    'K-;;;--KKK--O---;;-K',
+    'K------KKK------KKKK',
+    'KKK-KKKKKK-KKK-----K',
+    'K---;;;--K-K---;;;-K',
+    'K-O-;;;------O-;;;-K',
+    'K--------K-K------KK',
+    'KKKKKKKKKK-KKKKKKKKK',
+    'KKKKKKKKKKXKKKKKKKKK',
+  ],
+  warps: [{ x: 10, y: 15, to: 'route2', tx: 29, ty: 2 }],
+  items: [
+    { id: 'cv_sp1', x: 1, y: 1, item: 'superpocion', qty: 1 },
+    { id: 'cv_orb', x: 1, y: 13, item: 'orbe', qty: 4 },
+    { id: 'cv_sp2', x: 18, y: 11, item: 'superpocion', qty: 1 },
+  ],
+  statics: [{ id: 'cristalio', sp: 'cristalio', lv: 20, x: 16, y: 1 }],
+  encRate: 0.12,
+  enc: [
+    { sp: 'pedrusco', min: 12, max: 15, w: 35 }, { sp: 'chispo', min: 12, max: 14, w: 20 },
+    { sp: 'setin', min: 12, max: 14, w: 20 }, { sp: 'crisalin', min: 11, max: 12, w: 10 },
+    { sp: 'penasco', min: 15, max: 16, w: 8 }, { sp: 'voltisp', min: 15, max: 16, w: 7 },
+  ],
+  npcs: [
+    {
+      id: 'cv1', spr: 'hiker', x: 12, y: 7, dir: 'left',
+      trainer: { name: 'ROQUE', cls: 'Montañero', los: 4, party: [['pedrusco', 14], ['penasco', 16]], reward: 400,
+        before: '¡Esta gruta es mi casa! ¡A ver si aguantas como una roca!', lose: '¡Me has hecho polvo!',
+        after: 'Al fondo, arriba a la derecha, se oye un eco que no es de este mundo.' },
+    },
+    {
+      id: 'cv2', spr: 'woman', x: 5, y: 11, dir: 'down',
+      trainer: { name: 'GEMA', cls: 'Exploradora', los: 2, party: [['chispo', 14], ['voltisp', 16]], reward: 420,
+        before: '¡Mis kumis iluminan la gruta con sus chispas!', lose: '¡Me he quedado a oscuras!',
+        after: 'En la oscuridad, los kumis salvajes se esconden en el musgo alto.' },
+    },
+  ],
 };
 
 const STARTERS = ['brotin', 'ascuino', 'gotiko'];
@@ -443,7 +588,7 @@ const STARTERS = ['brotin', 'ascuino', 'gotiko'];
       if (!ch || !WALKABLE.includes(ch)) console.error('Mapa ' + id + ': llegada no transitable en ' + wp.to + ' ' + wp.tx + ',' + wp.ty);
       if (!WALKABLE.includes(m.t[wp.y][wp.x])) console.error('Mapa ' + id + ': portal sobre baldosa sólida ' + wp.x + ',' + wp.y);
     });
-    (m.npcs || []).concat(m.items || []).forEach(o => {
+    (m.npcs || []).concat(m.items || [], m.statics || []).forEach(o => {
       if (!WALKABLE.includes(m.t[o.y][o.x])) console.error('Mapa ' + id + ': objeto ' + o.id + ' sobre baldosa sólida');
     });
   }
